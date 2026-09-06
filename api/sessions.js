@@ -1,17 +1,16 @@
 // api/sessions.js
-// Proxy HTTPS -> HTTP (module http natif) pour récupérer le nombre
-// de sessions WhatsApp actuellement connectées.
+// Proxy vers le compteur de sessions actives de TechX-mini
 
 const http = require('http');
 
-const KATABUMP_HOST = '51.75.118.149';
-const KATABUMP_PORT = 20224;
+const BOT_HOST = '51.75.118.149';
+const BOT_PORT = 20224;
 
 module.exports = async function handler(req, res) {
     const options = {
-        hostname: KATABUMP_HOST,
-        port: KATABUMP_PORT,
-        path: '/api/sessions/count',
+        hostname: BOT_HOST,
+        port: BOT_PORT,
+        path: '/api/stats',
         method: 'GET',
         timeout: 8000,
     };
