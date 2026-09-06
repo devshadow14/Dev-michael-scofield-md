@@ -1,11 +1,10 @@
 // api/session.js
-// Proxy HTTPS -> HTTP (module http natif) pour déconnecter une session
-// depuis le site (bouton "Déconnecter une session").
+// Proxy vers la déconnexion d'une session sur TechX-mini
 
 const http = require('http');
 
-const KATABUMP_HOST = '51.75.118.149';
-const KATABUMP_PORT = 20224;
+const BOT_HOST = '51.75.118.149';
+const BOT_PORT = 20224;
 
 module.exports = async function handler(req, res) {
     if (req.method !== 'DELETE') {
@@ -18,8 +17,8 @@ module.exports = async function handler(req, res) {
     }
 
     const options = {
-        hostname: KATABUMP_HOST,
-        port: KATABUMP_PORT,
+        hostname: BOT_HOST,
+        port: BOT_PORT,
         path: `/api/session/${phoneNumber}`,
         method: 'DELETE',
         timeout: 8000,
