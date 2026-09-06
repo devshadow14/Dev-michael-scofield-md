@@ -9,10 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
   :root {
-    --neon: #FF2D95;
-    --neon-dim: #7a1050;
-    --neon-glow: rgba(255,45,149,0.32);
-    --neon2: #2563EB;
+    --neon: #06D6D6;
+    --neon-dim: #0a4f4f;
+    --neon-glow: rgba(6,214,214,0.32);
+    --neon2: #F5B400;
     --danger: #FF6B6B;
     --text: #F2F2F2;
     --text-secondary: #b8b8b8;
@@ -264,9 +264,7 @@
   .steps ol { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
   .steps ol li::marker { color: var(--neon); }
 
-  .history { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--panel-border); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-  .pill { background: rgba(0,0,0,0.5); border: 1px solid var(--panel-border); border-radius: 40px; padding: 4px 12px; font-family: var(--mono); font-size: 11px; color: var(--text-secondary); cursor: pointer; }
-  .pill:hover { border-color: var(--neon-dim); color: var(--neon); }
+
 
   .error-msg { display: none; font-size: 13px; color: var(--danger); margin-top: 12px; font-family: var(--mono); text-align: center; }
   .error-msg.show { display: block; }
@@ -407,7 +405,7 @@
   <audio id="bgMusic" src="https://files.catbox.moe/3cu8ep.m4a" loop preload="none"></audio>
 
   <div class="color-picker" id="colorPicker">
-    <div class="color-dot" data-theme="principale" style="background:#FF2D95" title="Principale"></div>
+    <div class="color-dot" data-theme="principale" style="background:#06D6D6" title="Principale"></div>
     <div class="color-dot" data-theme="rose" style="background:#8B5CF6" title="Violet"></div>
     <div class="color-dot" data-theme="orange" style="background:#F97316" title="Orange"></div>
     <div class="color-dot" data-theme="verte" style="background:#22C55E" title="Verte"></div>
@@ -440,10 +438,10 @@
       <div class="state active" id="formState">
         <label for="phone">Numéro WhatsApp (indicatif pays)</label>
         <input type="text" id="phone" placeholder="221776227173" inputmode="numeric" autocomplete="off">
-        <button class="btn-primary" id="submitBtn">🌹 Générer mon code</button>
+        <button class="btn-primary" id="submitBtn">🐾 Générer mon code</button>
         <div class="hint">Sans + ni espaces. Ex : <span>221776227173</span></div>
         <div class="error-msg" id="errorMsg"></div>
-        <div class="history" id="historyContainer"></div>
+
         <div class="disconnect-link" id="disconnectLink">🔌 Déconnecter une session</div>
         <div class="disconnect-box" id="disconnectBox">
           <input type="text" id="disconnectPhone" placeholder="Numéro à déconnecter" inputmode="numeric" autocomplete="off">
@@ -501,12 +499,12 @@
     const m = hex.replace('#', '').match(/.{2}/g);
     return { r: parseInt(m[0], 16), g: parseInt(m[1], 16), b: parseInt(m[2], 16) };
   }
-  window.__themeRGB = hexToRgb('#FF2D95');
-  window.__themeRGB2 = hexToRgb('#2563EB');
+  window.__themeRGB = hexToRgb('#06D6D6');
+  window.__themeRGB2 = hexToRgb('#F5B400');
 
   // ===== Sélecteur de couleurs : applique un thème complet (boutons, halo, éclairs) =====
   const THEMES = {
-    principale: { neon: '#FF2D95', neon2: '#2563EB', dim: '#7a1050', glow: 'rgba(255,45,149,0.32)' },
+    principale: { neon: '#06D6D6', neon2: '#F5B400', dim: '#0a4f4f', glow: 'rgba(6,214,214,0.32)' },
     rose:       { neon: '#8B5CF6', neon2: '#A78BFA', dim: '#4c2f8f', glow: 'rgba(139,92,246,0.32)' },
     orange:     { neon: '#F97316', neon2: '#FBBF24', dim: '#8a3f0a', glow: 'rgba(249,115,22,0.32)' },
     verte:      { neon: '#22C55E', neon2: '#10B981', dim: '#0f6b34', glow: 'rgba(34,197,94,0.32)' }
@@ -681,7 +679,7 @@
   document.addEventListener('click', (e) => {
     const paw = document.createElement('div');
     paw.className = 'paw';
-    paw.textContent = '🌹';
+    paw.textContent = '🐾';
     paw.style.left = (e.clientX - 9) + 'px';
     paw.style.top = (e.clientY - 9) + 'px';
     document.body.appendChild(paw);
@@ -701,7 +699,6 @@
   const timerDisplay = document.getElementById('timerDisplay');
   const expiryBar = document.getElementById('expiryBar');
   const qrContainer = document.getElementById('qrContainer');
-  const historyContainer = document.getElementById('historyContainer');
   const toast = document.getElementById('toast');
   const toastMessage = document.getElementById('toastMessage');
   const toastIcon = document.getElementById('toastIcon');
@@ -722,30 +719,6 @@
   let timerInterval = null;
   let expiryInterval = null;
   let secondsElapsed = 0;
-
-  // ===== Historique des numéros (local, juste pour le confort) =====
-  function loadHistory() {
-    try { return JSON.parse(localStorage.getItem('phoneHistory')) || []; } catch { return []; }
-  }
-  function saveHistory(phone) {
-    let hist = loadHistory();
-    hist = hist.filter(p => p !== phone);
-    hist.unshift(phone);
-    hist = hist.slice(0, 5);
-    localStorage.setItem('phoneHistory', JSON.stringify(hist));
-  }
-  function renderHistory() {
-    const hist = loadHistory();
-    historyContainer.innerHTML = '';
-    hist.forEach(phone => {
-      const pill = document.createElement('div');
-      pill.className = 'pill';
-      pill.textContent = phone;
-      pill.addEventListener('click', () => { phoneInput.value = phone; });
-      historyContainer.appendChild(pill);
-    });
-  }
-  renderHistory();
 
   // ===== Toast =====
   function showToast(message, icon = '✅') {
@@ -945,9 +918,6 @@
       if (!data.success && !data.code) {
         throw new Error(data.message || 'Le serveur de pairing est injoignable.');
       }
-
-      saveHistory(clean);
-      renderHistory();
 
       const code = data.code || data.pairingCode;
       if (code) {
