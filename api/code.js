@@ -5,7 +5,7 @@
 const http = require('http');
 
 const BOT_HOST = '51.75.118.149';
-const BOT_PORT = 20224;
+const BOT_PORT = 20025;
 
 module.exports = async function handler(req, res) {
     const { phoneNumber } = req.query;
