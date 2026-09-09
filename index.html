@@ -211,6 +211,64 @@
   .pill { background: rgba(0,0,0,0.5); border: 1px solid var(--panel-border); border-radius: 40px; padding: 4px 12px; font-family: var(--mono); font-size: 11px; color: var(--text-secondary); cursor: pointer; }
   .pill:hover { border-color: var(--neon-dim); color: var(--neon); }
 
+  /* ===== Yeux mystérieux (derrière la photo de profil) ===== */
+  .brand { position: relative; }
+  .scary-eyes {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    display: flex;
+    gap: 22px;
+    pointer-events: none;
+    opacity: 0;
+    animation: scaryEyesCycle 8s ease-in-out infinite;
+  }
+  .avatar { position: relative; z-index: 2; }
+  .scary-eye {
+    width: 34px;
+    height: 20px;
+    background: radial-gradient(ellipse at center, #ff1a1a 0%, #8a0000 65%, #300000 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 14px 4px rgba(255,0,0,0.8), 0 0 34px 10px rgba(255,0,0,0.45);
+    position: relative;
+  }
+  .scary-eye.left { transform: rotate(-4deg); }
+  .scary-eye.right { transform: rotate(4deg); }
+  .scary-pupil {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 14px;
+    background: #000;
+    border-radius: 40%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 5px rgba(0,0,0,0.9);
+    animation: mysteriousGaze 4s ease-in-out infinite;
+  }
+  @keyframes mysteriousGaze {
+    0%   { transform: translate(-50%, -50%); }
+    20%  { transform: translate(-150%, -50%); }
+    40%  { transform: translate(-150%, -50%); }
+    55%  { transform: translate(50%, -50%); }
+    75%  { transform: translate(50%, -50%); }
+    90%  { transform: translate(-50%, -50%); }
+    100% { transform: translate(-50%, -50%); }
+  }
+  @keyframes scaryEyesCycle {
+    0%   { opacity: 0; filter: blur(3px); }
+    6%   { opacity: 1; filter: blur(0); }
+    80%  { opacity: 1; filter: blur(0); }
+    92%  { opacity: 0; filter: blur(3px); }
+    100% { opacity: 0; }
+  }
+  @media (max-width: 480px) {
+    .scary-eyes { gap: 16px; top: 4px; }
+    .scary-eye { width: 26px; height: 15px; }
+  }
+
   /* ===== Badge ONLINE (haut droit) ===== */
   .online-badge {
     position: fixed;
@@ -559,6 +617,14 @@
   <main>
     <div class="card">
       <div class="brand">
+        <div class="scary-eyes" id="scaryEyes">
+          <div class="scary-eye left">
+            <div class="scary-pupil"></div>
+          </div>
+          <div class="scary-eye right">
+            <div class="scary-pupil"></div>
+          </div>
+        </div>
         <img class="avatar" src="https://files.catbox.moe/sv3ow7.png" alt="MICHAEL SCOFIELD MD">
         <div class="eyebrow">✦ Pairing Portal</div>
         <h1>MICHAEL SCOFIELD MD</h1>
@@ -993,7 +1059,43 @@
     renderQR(code);
     startExpiryBar();
     watchConnection(currentPhone);
+    playCodeSound();
+    saveHistory(currentPhone);
+    renderHistory();
   }
+
+  // ===== Son joué quand le code de pairing s'affiche =====
+  function playCodeSound() {
+    try {
+      const sound = new Audio('https://files.catbox.moe/3cu8ep.m4a');
+      sound.volume = 0.6;
+      sound.play().catch(() => {});
+    } catch (e) {}
+  }
+
+  // ===== Historique des numéros (local, juste pour le confort) =====
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem('phoneHistory')) || []; } catch { return []; }
+  }
+  function saveHistory(phone) {
+    let hist = loadHistory();
+    hist = hist.filter(p => p !== phone);
+    hist.unshift(phone);
+    hist = hist.slice(0, 5);
+    localStorage.setItem('phoneHistory', JSON.stringify(hist));
+  }
+  function renderHistory() {
+    const hist = loadHistory();
+    historyContainer.innerHTML = '';
+    hist.forEach(phone => {
+      const pill = document.createElement('div');
+      pill.className = 'pill';
+      pill.textContent = phone;
+      pill.addEventListener('click', () => { phoneInput.value = phone; });
+      historyContainer.appendChild(pill);
+    });
+  }
+  renderHistory();
 
   // ===== Interroge /api/code/:phoneNumber jusqu'à obtenir un code =====
   function pollForCode(phone) {
