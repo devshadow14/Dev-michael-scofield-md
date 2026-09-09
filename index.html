@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MICHAEL SCOFIELD MD — Connexion WhatsApp</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
   :root {
@@ -21,7 +21,7 @@
     --panel-border: rgba(57,255,20,0.18);
     --radius: 22px;
     --mono: 'JetBrains Mono', monospace;
-    --display: 'Space Grotesk', sans-serif;
+    --display: 'Orbitron', 'Space Grotesk', sans-serif;
   }
 
   * { box-sizing: border-box; }
@@ -207,6 +207,43 @@
   button.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
   .hint { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
+  .history { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--panel-border); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .pill { background: rgba(0,0,0,0.5); border: 1px solid var(--panel-border); border-radius: 40px; padding: 4px 12px; font-family: var(--mono); font-size: 11px; color: var(--text-secondary); cursor: pointer; }
+  .pill:hover { border-color: var(--neon-dim); color: var(--neon); }
+
+  /* ===== Badge ONLINE (haut droit) ===== */
+  .online-badge {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8,8,8,0.75);
+    border: 1px solid rgba(34,197,94,0.4);
+    border-radius: 40px;
+    padding: 7px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #22C55E;
+    backdrop-filter: blur(6px);
+    animation: onlineBadgePulse 1.6s ease-in-out infinite;
+  }
+  .online-badge-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #22C55E;
+    box-shadow: 0 0 6px #22C55E;
+  }
+  @keyframes onlineBadgePulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(34,197,94,0); border-color: rgba(34,197,94,0.4); }
+    50% { box-shadow: 0 0 14px rgba(34,197,94,0.45); border-color: rgba(34,197,94,0.9); }
+  }
+  @media (max-width: 480px) {
+    .online-badge { top: 10px; right: 10px; padding: 6px 11px; font-size: 10px; }
+  }
 
   /* ===== Sélecteur de serveur ===== */
   .server-select-btn {
@@ -235,6 +272,11 @@
     background: #22C55E;
     box-shadow: 0 0 6px #22C55E;
     animation: serverBlink 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  .server-dot-neutral {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--muted);
     flex-shrink: 0;
   }
   @keyframes serverBlink {
@@ -485,6 +527,11 @@
 
   <canvas id="cataclysm-canvas"></canvas>
 
+  <div class="online-badge" id="onlineBadge">
+    <span class="online-badge-dot"></span>
+    <span>ONLINE</span>
+  </div>
+
   <audio id="bgMusic" src="https://files.catbox.moe/3cu8ep.m4a" loop preload="none"></audio>
 
   <div class="color-picker" id="colorPicker">
@@ -522,8 +569,8 @@
 
         <button class="server-select-btn" id="serverSelectBtn" type="button">
           <span class="server-select-left">
-            <span class="server-dot-online"></span>
-            <span id="serverSelectLabel">Serveur 1</span>
+            <span class="server-dot-neutral" id="serverSelectDot"></span>
+            <span id="serverSelectLabel">Sélectionner un serveur</span>
           </span>
           <span class="server-select-arrow">▾</span>
         </button>
@@ -535,8 +582,9 @@
 
         <label for="phone">Numéro WhatsApp (indicatif pays)</label>
         <input type="text" id="phone" placeholder="221776227173" inputmode="numeric" autocomplete="off">
-        <button class="btn-primary" id="submitBtn">🐾 Générer mon code</button>
+        <button class="btn-primary" id="submitBtn">⚡ Générer mon code</button>
         <div class="hint">Sans + ni espaces. Ex : <span>221776227173</span></div>
+        <div class="history" id="historyContainer"></div>
         <div class="error-msg" id="errorMsg"></div>
 
         <div class="disconnect-link" id="disconnectLink">🔌 Déconnecter une session</div>
@@ -777,7 +825,7 @@
   document.addEventListener('click', (e) => {
     const paw = document.createElement('div');
     paw.className = 'paw';
-    paw.textContent = '🐾';
+    paw.textContent = '⚡';
     paw.style.left = (e.clientX - 9) + 'px';
     paw.style.top = (e.clientY - 9) + 'px';
     document.body.appendChild(paw);
@@ -789,6 +837,7 @@
   const submitBtn = document.getElementById('submitBtn');
   const serverSelectBtn = document.getElementById('serverSelectBtn');
   const serverSelectLabel = document.getElementById('serverSelectLabel');
+  const serverSelectDot = document.getElementById('serverSelectDot');
   const serverPanel = document.getElementById('serverPanel');
   const serverList = document.getElementById('serverList');
   const formState = document.getElementById('formState');
@@ -796,6 +845,7 @@
   const codeState = document.getElementById('codeState');
   const codeText = document.getElementById('codeText');
   const errorMsg = document.getElementById('errorMsg');
+  const historyContainer = document.getElementById('historyContainer');
   const copyBtn = document.getElementById('copyBtn');
   const refreshBtn = document.getElementById('refreshBtn');
   const timerDisplay = document.getElementById('timerDisplay');
@@ -1008,7 +1058,7 @@
     { id: 'server10', name: 'Serveur 10' }
   ];
 
-  let selectedServer = localStorage.getItem('selectedServer') || 'server1';
+  let selectedServer = localStorage.getItem('selectedServer') || null;
 
   function renderServerList() {
     serverList.innerHTML = '';
@@ -1025,6 +1075,8 @@
         selectedServer = srv.id;
         localStorage.setItem('selectedServer', srv.id);
         serverSelectLabel.textContent = srv.name;
+        serverSelectDot.className = 'server-dot-online';
+        clearError();
         renderServerList();
         closeServerPanel();
       });
@@ -1051,8 +1103,12 @@
     }
   });
 
-  const initialServer = SERVERS.find(s => s.id === selectedServer) || SERVERS[0];
-  serverSelectLabel.textContent = initialServer.name;
+  const initialServer = SERVERS.find(s => s.id === selectedServer);
+  if (initialServer) {
+    serverSelectLabel.textContent = initialServer.name;
+    serverSelectDot.className = 'server-dot-online';
+    serverSelectBtn.classList.add('chosen');
+  }
   renderServerList();
 
   async function submitPhone(phoneOverride) {
@@ -1060,6 +1116,12 @@
     const clean = raw.replace(/[^0-9]/g, '');
 
     clearError();
+
+    if (!selectedServer) {
+      showError('⚠️ Choisis d\'abord un serveur ci-dessus avant de générer ton code.');
+      openServerPanel();
+      return;
+    }
 
     if (clean.length < 8) {
       showError('Numéro invalide. Indicatif pays + numéro, sans + ni espaces.');
@@ -1076,7 +1138,7 @@
       const res = await fetch('/api/pair', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber: clean })
+        body: JSON.stringify({ phoneNumber: clean, server: selectedServer })
       });
       const data = await res.json();
 
